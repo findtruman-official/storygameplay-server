@@ -44,4 +44,14 @@ export class SceneReportService {
 
     return obj;
   }
+
+  async listAll(): Promise<SceneReport[]> {
+    return await this.reportRepo.find();
+  }
+
+  async listAccountReports(account: string): Promise<SceneReport[]> {
+    return await this.reportRepo.find({
+      where: { account: account.toLowerCase() },
+    });
+  }
 }

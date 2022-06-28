@@ -1,5 +1,6 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RequestLoggerMiddleware } from './middleware/request-logger.middleware';
 import { Web3Service } from './web3/web3.service';
@@ -26,6 +27,8 @@ import { Web3Service } from './web3/web3.service';
         };
       },
     }),
+
+    ScheduleModule.forRoot(),
   ],
   providers: [Web3Service],
   exports: [Web3Service],
