@@ -7,6 +7,15 @@ import {
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import ServiceException from '../exception/service-exception';
+import { ApiProperty } from '@nestjs/swagger';
+
+export class ResponseData<T> {
+  @ApiProperty()
+  code: number;
+  @ApiProperty()
+  msg: string;
+  data: T;
+}
 
 /**
  * Wrap the returned value in a uniform format.

@@ -2,6 +2,7 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RequestLoggerMiddleware } from './middleware/request-logger.middleware';
+import { Web3Service } from './web3/web3.service';
 
 @Module({
   imports: [
@@ -26,6 +27,8 @@ import { RequestLoggerMiddleware } from './middleware/request-logger.middleware'
       },
     }),
   ],
+  providers: [Web3Service],
+  exports: [Web3Service],
 })
 export class CoreModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

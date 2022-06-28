@@ -14,7 +14,7 @@ async function setupSwagger(app: INestApplication) {
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api-doc', app, document);
-  logger.log('Swagger API Doc enabled.');
+  logger.log('Swagger API Doc enabled at "/api-doc"');
 }
 
 async function bootstrap() {
