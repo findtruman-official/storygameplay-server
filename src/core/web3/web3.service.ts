@@ -15,8 +15,8 @@ export class Web3Service {
   constructor(private readonly configService: ConfigService) {}
 
   async onModuleInit() {
-    const config = this.configService.get('WEB3_ECRECOVER_NODE');
-    const client = new Web3(config.ecRecoverNode);
+    const ecRecoverNode = this.configService.get('WEB3_ECRECOVER_NODE');
+    const client = new Web3(ecRecoverNode);
     this.ecRecoverClient = client;
   }
 

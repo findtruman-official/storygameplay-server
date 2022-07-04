@@ -59,7 +59,7 @@ export class VerifyEthSignPipe implements PipeTransform {
     const currTimesamp = new Date().valueOf();
 
     if (
-      input.data.timestamp + this.expires > currTimesamp ||
+      input.data.timestamp + this.expires < currTimesamp ||
       input.data.timestamp > currTimesamp
     ) {
       throw new BadRequestException('invalid timestamp');
