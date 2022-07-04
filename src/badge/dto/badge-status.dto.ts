@@ -21,4 +21,10 @@ export class BadgeStatusDTO {
 
   @ApiProperty()
   claimable: boolean;
+
+  @ApiProperty()
+  achievementProofs: string[];
+
+  @ApiProperty()
+  tokensProofs: string[];
 }

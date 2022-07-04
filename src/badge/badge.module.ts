@@ -4,9 +4,18 @@ import { CoreModule } from 'src/core/core.module';
 import { SceneModule } from 'src/scene/scene.module';
 import { BadgeService } from './badge.service';
 import { BadgeController } from './badge.controller';
+import { ConfigModule } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { BadgeMeta } from './entity/badge-meta.entity';
 
 @Module({
-  imports: [CoreModule, ScheduleModule, SceneModule],
+  imports: [
+    ConfigModule,
+    CoreModule,
+    ScheduleModule,
+    SceneModule,
+    TypeOrmModule.forFeature([BadgeMeta]),
+  ],
   providers: [BadgeService],
   controllers: [BadgeController],
 })

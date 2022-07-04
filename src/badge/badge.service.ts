@@ -26,6 +26,7 @@ export class BadgeService {
   private ftcEndpoint: string;
   private ftcOperatePk: string;
   private ftcSyncCronTime: string;
+  private isSyncingMerkleTree: boolean = false;
 
   constructor(
     configService: ConfigService,
@@ -43,19 +44,26 @@ export class BadgeService {
     this.ftcSyncCronTime = configService.get('FTC_SYNC_CRON_TIME');
   }
 
-  onModuleInit() {
-    const job = new CronJob(this.ftcSyncCronTime, async () => {
+  async onModuleInit() {
+    const work = async () => {
       try {
         await this.syncMerkleTree();
       } catch (err) {
         this.logger.error('failed to sync MerkleTree', err);
+        throw err;
       }
-    });
+    };
+    const job = new CronJob(this.ftcSyncCronTime, work);
     this.schedulerRegistry.addCronJob('sync-merkle-root', job);
     job.start();
+
+    await work();
   }
 
   private async syncMerkleTree() {
+    if (this.isSyncingMerkleTree) return;
+    this.isSyncingMerkleTree = true;
+
     await this.updateMerkleTree();
     if (this.merkleTree.getLeafCount() === 0) {
       this.logger.debug(`merkle leaves is 0.`);
@@ -64,10 +72,11 @@ export class BadgeService {
     const root = this.merkleTree.getHexRoot();
 
     const prevRoot = await this.web3Service.call('merkleRoot', [], {
-      endpoint: this.ftcAddress,
+      endpoint: this.ftcEndpoint,
       abi: ABIs.FTC,
       address: this.ftcAddress,
     });
+    this.logger.debug('prev merkleRoot=' + prevRoot);
 
     if (root == prevRoot) {
       this.logger.debug(`merkleRoot is not changed`);
@@ -82,6 +91,7 @@ export class BadgeService {
     });
 
     this.logger.debug(`setMerkleRoot at tx[${receipt.transactionHash}]`);
+    this.isSyncingMerkleTree = false;
   }
 
   private async updateMerkleTree() {
@@ -105,30 +115,19 @@ export class BadgeService {
       try {
         // for claim achievement
         elements.push(
-          encodePacked(
-            { type: 'string', value: 'ach' },
-            { type: 'address', value: rep.account.toLowerCase() },
-            {
-              type: 'uint256',
-              value: sceneMetaMap[rep.scene].badgeId.toString(),
-            },
-          ),
+          this.encodeClaimAchievementLeaf({
+            account: rep.account,
+            badgeId: sceneMetaMap[rep.scene].badgeId,
+          }),
         );
 
         // for claim tokens
         elements.push(
-          encodePacked(
-            { type: 'string', value: 'aw' },
-            { type: 'address', value: rep.account.toLowerCase() },
-            {
-              type: 'uint256',
-              value: sceneMetaMap[rep.scene].badgeId.toString(),
-            },
-            {
-              type: 'uint256',
-              value: sceneMetaMap[rep.scene].tokens.toString(),
-            },
-          ),
+          this.encodeClaimTokenLeaf({
+            account: rep.account,
+            badgeId: sceneMetaMap[rep.scene].badgeId,
+            tokens: sceneMetaMap[rep.scene].tokens,
+          }),
         );
       } catch (err) {
         this.logger.error('merkle leaf encode failed: ', err);
@@ -180,8 +179,63 @@ export class BadgeService {
           image: meta.image,
 
           claimable: !!report,
+          achievementProofs: report
+            ? this.merkleTree.getHexProof(
+                keccak256(
+                  this.encodeClaimAchievementLeaf({
+                    account: account,
+                    badgeId: meta.badgeId,
+                  }),
+                ),
+              )
+            : [],
+          tokensProofs: report
+            ? this.merkleTree.getHexProof(
+                keccak256(
+                  this.encodeClaimTokenLeaf({
+                    account: account,
+                    badgeId: meta.badgeId,
+                    tokens: meta.tokens,
+                  }),
+                ),
+              )
+            : [],
         };
       });
     return dtos;
+  }
+
+  private encodeClaimTokenLeaf(opts: {
+    account: string;
+    badgeId: number;
+    tokens: number;
+  }) {
+    return encodePacked(
+      { type: 'string', value: 'aw' },
+      { type: 'address', value: opts.account.toLowerCase() },
+      {
+        type: 'uint256',
+        value: opts.badgeId.toString(),
+      },
+      {
+        type: 'uint256',
+        value: opts.tokens.toString() + '000000000000000000',
+      },
+    );
+  }
+
+  private encodeClaimAchievementLeaf(opts: {
+    account: string;
+    badgeId: number;
+  }) {
+    return encodePacked(
+      { type: 'string', value: 'ach' },
+      { type: 'address', value: opts.account.toLowerCase() },
+      {
+        type: 'uint256',
+        value: opts.badgeId.toString(),
+      },
+    );
+    // TO CHECK merkle!!
   }
 }

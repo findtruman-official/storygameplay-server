@@ -76,7 +76,7 @@ export class Web3Service {
 
     const receipt: TransactionReceipt = await contract.methods[method](
       ...args,
-    ).send({ from: address });
+    ).send({ from: address, gas: 2000000 });
 
     return receipt;
   }
