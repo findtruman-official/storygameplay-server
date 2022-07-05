@@ -22,6 +22,9 @@ export class BadgeService {
   private logger = new Logger(BadgeService.name);
   private merkleTree: MerkleTree;
 
+  private ftaAddress: string;
+  private ftaEndpoint: string;
+
   private ftcAddress: string;
   private ftcEndpoint: string;
   private ftcOperatePk: string;
@@ -42,6 +45,8 @@ export class BadgeService {
     this.ftcEndpoint = configService.get('FTC_ENDPOINT');
     this.ftcOperatePk = configService.get('FTC_OPERATE_PK');
     this.ftcSyncCronTime = configService.get('FTC_SYNC_CRON_TIME');
+    this.ftaAddress = configService.get('FTA_ADDRESS');
+    this.ftaEndpoint = configService.get('FTA_ENDPOINT');
   }
 
   async onModuleInit() {
@@ -237,5 +242,42 @@ export class BadgeService {
       },
     );
     // TO CHECK merkle!!
+  }
+
+  public async getNftMeta(tokenId: number | string) {
+    const sceneId = (await this.web3Service.call('ftaSceneId', [tokenId], {
+      endpoint: this.ftaEndpoint,
+      address: this.ftaAddress,
+      abi: [
+        {
+          inputs: [
+            {
+              internalType: 'uint256',
+              name: '',
+              type: 'uint256',
+            },
+          ],
+          name: 'ftaSceneId',
+          outputs: [
+            {
+              internalType: 'uint256',
+              name: '',
+              type: 'uint256',
+            },
+          ],
+          stateMutability: 'view',
+          type: 'function',
+        },
+      ],
+    })) as number;
+    const meta = await this.metaRepo.findOne({ where: { badgeId: sceneId } });
+    if (!meta) {
+      return null;
+    }
+    return {
+      name: `${meta.name} #${tokenId}`,
+      image: meta.image,
+      description: meta.desc,
+    };
   }
 }

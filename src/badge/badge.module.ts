@@ -7,6 +7,7 @@ import { BadgeController } from './badge.controller';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BadgeMeta } from './entity/badge-meta.entity';
+import { BadgeNftController } from './nft.controller';
 
 @Module({
   imports: [
@@ -17,6 +18,6 @@ import { BadgeMeta } from './entity/badge-meta.entity';
     TypeOrmModule.forFeature([BadgeMeta]),
   ],
   providers: [BadgeService],
-  controllers: [BadgeController],
+  controllers: [BadgeController, BadgeNftController],
 })
 export class BadgeModule {}
