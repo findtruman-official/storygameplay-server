@@ -73,10 +73,12 @@ export class Web3Service {
     const contract = new client.eth.Contract(opts.abi, opts.address);
 
     const { address } = client.eth.accounts.wallet.add(opts.fromPk);
+    const prevGasPrice = await client.eth.getGasPrice();
+    const gasPrice = parseInt(prevGasPrice) + 1000000000;
 
     const receipt: TransactionReceipt = await contract.methods[method](
       ...args,
-    ).send({ from: address, gas: 2000000 });
+    ).send({ from: address, gas: 2000000, gasPrice });
 
     return receipt;
   }

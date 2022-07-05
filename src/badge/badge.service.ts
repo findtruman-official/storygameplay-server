@@ -87,7 +87,7 @@ export class BadgeService {
       this.logger.debug(`merkleRoot is not changed`);
       return;
     }
-
+    this.logger.debug('setMerkleRoot ...');
     const receipt = await this.web3Service.send('setMerkleRoot', [root], {
       endpoint: this.ftcEndpoint,
       abi: ABIs.FTC,
