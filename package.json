@@ -21,6 +21,12 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "0xsequence": "^0.39.6",
+    "@0xsequence/network": "^0.39.6",
+    "@0xsequence/provider": "^0.39.6",
+    "@0xsequence/utils": "^0.39.6",
+    "@0xsequence/wallet": "^0.39.6",
+    "@ethersproject/providers": "^5.6.8",
     "@nestjs/common": "^8.0.0",
     "@nestjs/config": "^2.1.0",
     "@nestjs/core": "^8.0.0",
@@ -30,6 +36,7 @@
     "@nestjs/typeorm": "^8.1.4",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.13.2",
+    "ethers": "^5.6.9",
     "keccak256": "^1.0.6",
     "merkletreejs": "^0.2.32",
     "mysql2": "^2.3.3",

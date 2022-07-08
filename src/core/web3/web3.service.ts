@@ -2,8 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Web3 from 'web3';
 import { AbiItem } from 'web3-utils';
-import { ContractSendMethod } from 'web3-eth-contract';
 import { TransactionReceipt } from 'web3-core';
+import { BytesLike, ethers } from 'ethers';
+import { encodeMessageDigest } from '@0xsequence/utils';
 @Injectable()
 export class Web3Service {
   private logger = new Logger(Web3Service.name);
@@ -11,6 +12,8 @@ export class Web3Service {
 
   // {endpoint: client}
   private clients: Record<string, Web3> = {};
+  private sequencePolygonClient: Web3;
+  private sequencePolygonEIP12721MagicValue = '0x1626ba7e';
 
   constructor(private readonly configService: ConfigService) {}
 
@@ -18,6 +21,10 @@ export class Web3Service {
     const ecRecoverNode = this.configService.get('WEB3_ECRECOVER_NODE');
     const client = new Web3(ecRecoverNode);
     this.ecRecoverClient = client;
+
+    this.sequencePolygonClient = new Web3(
+      this.configService.get('WEB3_SEQUENCE_POLYGON_NODE'),
+    );
   }
 
   async ecRecover(encrypted: string, sig: string): Promise<string> {
@@ -34,6 +41,20 @@ export class Web3Service {
       sig,
     );
     return recoverAddr.toLowerCase();
+  }
+
+  async isValidSeqPolygonSig(
+    address: string,
+    data: string,
+    sig: string,
+  ): Promise<boolean> {
+    const digest = ethers.utils.hexlify(this.encodeHash(data));
+    const instance = new this.sequencePolygonClient.eth.Contract(
+      eip1271Abi,
+      address,
+    );
+    const result = await instance.methods.isValidSignature(digest, sig).call();
+    return result === this.sequencePolygonEIP12721MagicValue;
   }
 
   getCachedClient(endpoint: string): Web3 {
@@ -82,4 +103,58 @@ export class Web3Service {
 
     return receipt;
   }
+
+  // EIP 1271
+
+  messageToBytes(message: BytesLike) {
+    if (ethers.utils.isBytes(message) || ethers.utils.isHexString(message)) {
+      return ethers.utils.arrayify(message);
+    }
+
+    return ethers.utils.toUtf8Bytes(message);
+  }
+  prefixEIP191Message(message: BytesLike) {
+    const eip191prefix = ethers.utils.toUtf8Bytes(
+      '\x19Ethereum Signed Message:\n',
+    );
+    const messageBytes = this.messageToBytes(message);
+    return ethers.utils.concat([
+      eip191prefix,
+      ethers.utils.toUtf8Bytes(String(messageBytes.length)),
+      messageBytes,
+    ]);
+  }
+
+  encodeHash(message: string) {
+    const prefixed = this.prefixEIP191Message(message);
+    const digest = encodeMessageDigest(prefixed);
+    return digest;
+  }
 }
+
+const eip1271Abi = [
+  {
+    inputs: [
+      {
+        internalType: 'bytes32',
+        name: '_hash',
+        type: 'bytes32',
+      },
+      {
+        internalType: 'bytes',
+        name: '_signature',
+        type: 'bytes',
+      },
+    ],
+    name: 'isValidSignature',
+    outputs: [
+      {
+        internalType: 'bytes4',
+        name: 'magicValue',
+        type: 'bytes4',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+] as AbiItem[];

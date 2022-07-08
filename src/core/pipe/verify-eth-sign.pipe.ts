@@ -48,12 +48,28 @@ export class VerifyEthSignPipe implements PipeTransform {
       throw new BadRequestException('invliad DataWithSig<T> structure');
     }
 
-    const recoverAddr = await this.web3Svc.ecRecover(
-      JSON.stringify(input.data),
-      input.sig,
-    );
-    if (recoverAddr.toLowerCase() !== input.data.address.toLowerCase()) {
-      throw new BadRequestException('invalid DataWithSig<T> signature');
+    try {
+      const recoverAddr = await this.web3Svc.ecRecover(
+        JSON.stringify(input.data),
+        input.sig,
+      );
+      if (recoverAddr.toLowerCase() !== input.data.address.toLowerCase()) {
+        throw new BadRequestException('invalid DataWithSig<T> signature');
+      }
+    } catch (err) {
+      if (err instanceof BadRequestException) {
+        throw err;
+      } else {
+        if (
+          !(await this.web3Svc.isValidSeqPolygonSig(
+            input.data.address,
+            JSON.stringify(input.data),
+            input.sig,
+          ))
+        ) {
+          throw new BadRequestException('invalid DataWithSig<T> signature');
+        }
+      }
     }
 
     const currTimesamp = new Date().valueOf();
