@@ -3,6 +3,7 @@ import {
   Controller,
   DefaultValuePipe,
   Get,
+  ParseArrayPipe,
   ParseIntPipe,
   Post,
   Query,
@@ -136,7 +137,11 @@ export class SceneController {
     @Query('scene') scene: string,
     @Query('page', new DefaultValuePipe('1'), ParseIntPipe) page: number,
     @Query('size', new DefaultValuePipe('10'), ParseIntPipe) size: number,
-    @Query('wallets') wallets: string[],
+    @Query(
+      'wallets',
+      new ParseArrayPipe({ items: String, separator: ',', optional: true }),
+    )
+    wallets?: string[],
   ): Promise<PageResult<SceneMessage>> {
     return await this.messageService.list({
       scene,
