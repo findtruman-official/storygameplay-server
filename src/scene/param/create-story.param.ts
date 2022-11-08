@@ -30,4 +30,7 @@ export class CreateStoryParam {
 
   @ApiProperty()
   url: string;
+
+  @ApiProperty({ nullable: true })
+  wallet: string;
 }

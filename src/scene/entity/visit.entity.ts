@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -18,6 +19,10 @@ export class SceneVisit {
 
   @Column({ nullable: false, length: 64 })
   account: string;
+
+  @Index()
+  @Column({ nullable: true, length: 64, default: '' })
+  wallet: string;
 
   @CreateDateColumn()
   createTime: Date;

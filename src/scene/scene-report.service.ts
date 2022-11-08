@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { SceneReport } from './entity/report.entity';
 import { CreateReportParam } from './param/create-report.param';
 
@@ -45,8 +45,16 @@ export class SceneReportService {
     return obj;
   }
 
-  async listAll(): Promise<SceneReport[]> {
-    return await this.reportRepo.find();
+  async listAll({ wallets }: { wallets?: string[] } = {}): Promise<
+    SceneReport[]
+  > {
+    if (wallets) {
+      return await this.reportRepo.find({
+        where: [{ wallet: In(wallets) }, { wallet: '' }, { wallet: null }],
+      });
+    } else {
+      return await this.reportRepo.find();
+    }
   }
 
   async listAccountReports(account: string): Promise<SceneReport[]> {

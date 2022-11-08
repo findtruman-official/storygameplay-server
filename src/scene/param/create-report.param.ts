@@ -24,4 +24,7 @@ export class CreateReportParam {
 
   @ApiProperty()
   community: string;
+
+  @ApiProperty({ nullable: true })
+  wallet: string;
 }

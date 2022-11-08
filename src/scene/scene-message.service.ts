@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PageParam, PageResult } from 'src/core/utils/page';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, In, Repository } from 'typeorm';
 import { SceneMessage } from './entity/message.entity';
 import { CreateMessageParam } from './param/create-message.param';
 
@@ -15,9 +15,17 @@ export class SceneMessageService {
   async list(opts: {
     scene: string;
     page: PageParam;
+    wallets?: string[];
   }): Promise<PageResult<SceneMessage>> {
+    const where: FindOptionsWhere<SceneMessage> = {
+      scene: opts.scene,
+    };
+    if (opts.wallets) {
+      where.wallet = In([...opts.wallets, '']);
+    }
+
     const [messages, total] = await this.messageRepo.findAndCount({
-      where: { scene: opts.scene },
+      where,
       order: { id: 'DESC' },
       skip: opts.page.skip,
       take: opts.page.take,

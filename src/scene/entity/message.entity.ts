@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -21,6 +22,10 @@ export class SceneMessage {
 
   @Column({ nullable: false, length: 800 })
   message: string;
+
+  @Index()
+  @Column({ nullable: true, length: 64, default: '' })
+  wallet: string;
 
   @CreateDateColumn()
   createTime: Date;

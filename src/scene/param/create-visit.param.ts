@@ -9,4 +9,7 @@ export class CreateVisitParam {
 
   @ApiProperty()
   account: string;
+
+  @ApiProperty({ nullable: true })
+  wallet: string;
 }

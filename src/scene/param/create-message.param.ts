@@ -12,4 +12,7 @@ export class CreateMessageParam {
 
   @ApiProperty()
   message: string;
+
+  @ApiProperty({ nullable: true })
+  wallet: string;
 }

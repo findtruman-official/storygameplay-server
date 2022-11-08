@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -33,6 +34,10 @@ export class SceneReport {
 
   @Column({ nullable: false, length: 100, default: '' })
   community: string;
+
+  @Index()
+  @Column({ nullable: true, length: 64, default: '' })
+  wallet: string;
 
   @CreateDateColumn()
   createTime: Date;

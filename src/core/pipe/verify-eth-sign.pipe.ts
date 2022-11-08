@@ -2,6 +2,7 @@ import {
   ArgumentMetadata,
   BadRequestException,
   Injectable,
+  Logger,
   PipeTransform,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -21,6 +22,9 @@ export class SigData<D> {
 
 export class DataWithSig<D> {
   @ApiProperty()
+  wallet?: string;
+
+  @ApiProperty()
   data: SigData<D>;
 
   @ApiProperty()
@@ -33,6 +37,7 @@ export class DataWithSig<D> {
  */
 @Injectable()
 export class VerifyEthSignPipe implements PipeTransform {
+  private logger = new Logger(VerifyEthSignPipe.name);
   private expires: number;
 
   constructor(private readonly web3Svc: Web3Service, configSvc: ConfigService) {
@@ -48,27 +53,42 @@ export class VerifyEthSignPipe implements PipeTransform {
       throw new BadRequestException('invliad DataWithSig<T> structure');
     }
 
-    try {
-      const recoverAddr = await this.web3Svc.ecRecover(
-        JSON.stringify(input.data),
-        input.sig,
-      );
-      if (recoverAddr.toLowerCase() !== input.data.address.toLowerCase()) {
-        throw new BadRequestException('invalid DataWithSig<T> signature');
-      }
-    } catch (err) {
-      if (err instanceof BadRequestException) {
-        throw err;
-      } else {
-        if (
-          !(await this.web3Svc.isValidSeqPolygonSig(
-            input.data.address,
+    const wallet = input.wallet || 'metamask';
+
+    switch (wallet) {
+      case 'metamask': {
+        try {
+          const recoverAddr = await this.web3Svc.ecRecover(
             JSON.stringify(input.data),
             input.sig,
-          ))
-        ) {
-          throw new BadRequestException('invalid DataWithSig<T> signature');
+          );
+          if (recoverAddr.toLowerCase() !== input.data.address.toLowerCase()) {
+            throw new BadRequestException('invalid DataWithSig<T> signature');
+          }
+        } catch (err) {
+          if (err instanceof BadRequestException) {
+            throw err;
+          } else {
+            if (
+              !(await this.web3Svc.isValidSeqPolygonSig(
+                input.data.address,
+                JSON.stringify(input.data),
+                input.sig,
+              ))
+            ) {
+              throw new BadRequestException('invalid DataWithSig<T> signature');
+            }
+          }
         }
+        break;
+      }
+      case 'neoline': {
+        this.logger.warn("sign data validater is not ready for 'neoline'");
+        break;
+      }
+      default: {
+        this.logger.warn('unknown wallet: ' + wallet);
+        break;
       }
     }
 

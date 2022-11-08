@@ -106,6 +106,9 @@ export function schemaWithEthSig({
       sig: {
         type: 'string',
       },
+      wallet: {
+        type: 'string',
+      },
     },
   };
 
