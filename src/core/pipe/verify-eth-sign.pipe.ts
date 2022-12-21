@@ -10,6 +10,8 @@ import { plainToClass } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { Web3Service } from '../web3/web3.service';
 import { validate } from 'class-validator';
+import Secp256k1 from 'secp256k1';
+import { sha256 } from 'js-sha256';
 
 export class SigData<D> {
   @ApiProperty()
@@ -45,6 +47,26 @@ export class VerifyEthSignPipe implements PipeTransform {
       infer: true,
     });
   }
+
+  async verifyPlugSign(inputs: DataWithSig<any>) {
+    // build message
+    function formatMessage(rawMessage: string) {
+      const encoder = new TextEncoder();
+      const message = encoder.encode(rawMessage);
+      const hash = sha256.create();
+      hash.update(message);
+      return hash.digest();
+    }
+    const { sig, rawKey } = JSON.parse(inputs.sig);
+
+    const result = Secp256k1.ecdsaVerify(
+      new Uint8Array(Buffer.from(sig, 'hex')),
+      new Uint8Array(formatMessage(JSON.stringify(inputs.data))),
+      new Uint8Array(Buffer.from(rawKey, 'hex')),
+    );
+    return result;
+  }
+
   async transform(value: any, metadata: ArgumentMetadata) {
     const input: DataWithSig<any> = plainToClass(DataWithSig, value);
 
@@ -84,6 +106,16 @@ export class VerifyEthSignPipe implements PipeTransform {
       }
       case 'neoline': {
         this.logger.warn("sign data validater is not ready for 'neoline'");
+        break;
+      }
+      case 'plug': {
+        try {
+          if (!this.verifyPlugSign(input)) {
+            throw new BadRequestException('invalid DataWithSig<T> signature');
+          }
+        } catch (err) {
+          this.logger.warn('plug verify failed: ' + err.message);
+        }
         break;
       }
       default: {

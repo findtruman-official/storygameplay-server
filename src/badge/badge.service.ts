@@ -106,7 +106,9 @@ export class BadgeService {
     const sceneMetaMap: Record<string, BadgeMeta> = {};
     metas.forEach((meta) => (sceneMetaMap[meta.scene] = meta));
 
-    const reports = await this.reportService.listAll();
+    const reports = await this.reportService.listAll({
+      wallets: ['metamask'],
+    });
 
     const reportsHasMeta = reports.filter(
       (rep) => sceneMetaMap[rep.scene] !== undefined,
